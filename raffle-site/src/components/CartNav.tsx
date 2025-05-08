@@ -1,12 +1,6 @@
 import { Link } from "react-router-dom";
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-}
+import { CartItem } from "./CartItem";
 
 interface CartNavProps {
   cartItems: CartItem[];

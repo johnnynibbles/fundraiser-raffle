@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Store from "./pages/Store";
 import Cart from "./pages/Cart";
+import Join from "./pages/Join";
 import Navbar from "./components/Navbar"; // Import the Navbar component
 import { useState } from "react";
 
@@ -53,6 +54,7 @@ function App() {
               />
             }
           />
+          <Route path="/join" element={<Join />} />
         </Routes>
       </div>
     </Router>

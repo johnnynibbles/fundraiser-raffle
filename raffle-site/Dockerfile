@@ -3,8 +3,13 @@ FROM node:23.11.0-alpine AS build
 
 WORKDIR /app
 
+
 # Copy package files
 COPY . .
+
+# Create .env file from build args
+RUN echo "VITE_SUPABASE_URL=$VITE_SUPABASE_URL" > .env && \
+  echo "VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY" >> .env
 
 # Clean install dependencies with security audit
 RUN rm -rf node_modules package-lock.json && \

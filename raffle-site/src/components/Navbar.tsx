@@ -33,6 +33,7 @@ function Navbar({ cartItems }: NavbarProps) {
 
   const handleLoginClick = () => {
     setShowLogin(true);
+    setIsAdmin(true);
   };
 
   const onLogout = async () => {

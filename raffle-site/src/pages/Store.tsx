@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import ItemCard from "../components/ItemCard";
 
 const items = [
   {
@@ -114,27 +115,7 @@ function Store({ addToCart }: { addToCart: (item: any) => void }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredItems.map((item) => (
-          <div
-            key={item.id}
-            className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <img
-              src={item.imageUrl}
-              alt={item.name}
-              className="w-full h-48 object-cover rounded-lg mb-4"
-            />
-            <h2 className="text-lg font-semibold mb-2">{item.name}</h2>
-            <p className="text-gray-600 mb-4">{item.description}</p>
-            <div className="flex justify-between items-center">
-              <p className="text-lg font-medium text-blue-600">${item.price}</p>
-              <button
-                onClick={(e) => handleAddToCart(item, e)}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 cursor-pointer transition-colors"
-              >
-                Add to Cart
-              </button>
-            </div>
-          </div>
+          <ItemCard key={item.id} {...item} onAddToCart={handleAddToCart} />
         ))}
       </div>
       {filteredItems.length === 0 && (

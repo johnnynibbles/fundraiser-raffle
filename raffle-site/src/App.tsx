@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar"; // Import the Navbar component
 import { useState } from "react";
 import AdminLayout from "./components/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
+import Events from "./pages/admin/Events";
 
 function App() {
   const [cartItems, setCartItems] = useState<
@@ -61,7 +62,7 @@ function App() {
           {/* Admin routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="events" element={<div>Events Management</div>} />
+            <Route path="events" element={<Events />} />
             <Route path="items" element={<div>Items Management</div>} />
             <Route path="orders" element={<div>Orders Management</div>} />
             <Route path="users" element={<div>Users Management</div>} />

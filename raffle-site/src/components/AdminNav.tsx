@@ -22,7 +22,7 @@ function AdminNav({ onNavigate, currentSection }: AdminNavProps) {
       {/* Mobile menu button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 p-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 lg:hidden"
+        className="fixed top-4 left-4 z-50 p-2 rounded-md bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:from-pink-600 hover:to-purple-600 lg:hidden"
       >
         {isOpen ? (
           <XMarkIcon className="h-6 w-6" />
@@ -46,7 +46,9 @@ function AdminNav({ onNavigate, currentSection }: AdminNavProps) {
         } lg:translate-x-0`}
       >
         <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Admin Panel</h2>
+          <h2 className="text-xl font-bold text-purple-600 mb-6">
+            Admin Panel
+          </h2>
           <nav className="space-y-2">
             {navItems.map((item) => (
               <button
@@ -57,8 +59,8 @@ function AdminNav({ onNavigate, currentSection }: AdminNavProps) {
                 }}
                 className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
                   currentSection === item.id
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-gradient-to-r from-pink-100 to-purple-100 text-purple-600"
+                    : "text-gray-600 hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50"
                 }`}
               >
                 {item.label}

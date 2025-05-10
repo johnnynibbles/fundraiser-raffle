@@ -51,9 +51,9 @@ function Events() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Raffle Events</h1>
+        <h1 className="text-2xl font-bold text-purple-600">Raffle Events</h1>
         <button
-          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-md hover:from-pink-600 hover:to-purple-600 transition-colors"
           onClick={() => {
             /* TODO: Implement new event creation */
           }}
@@ -64,30 +64,33 @@ function Events() {
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gradient-to-r from-pink-50 to-purple-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider">
                 Start Date
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider">
                 End Date
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {events.map((event) => (
-              <tr key={event.id}>
+              <tr
+                key={event.id}
+                className="hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50"
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-purple-600">
                     {event.name}
                   </div>
                   <div className="text-sm text-gray-500">
@@ -101,8 +104,8 @@ function Events() {
                       event.status === "active"
                         ? "bg-green-100 text-green-800"
                         : event.status === "completed"
-                        ? "bg-gray-100 text-gray-800"
-                        : "bg-yellow-100 text-yellow-800"
+                        ? "bg-purple-100 text-purple-800"
+                        : "bg-pink-100 text-pink-800"
                     }`}
                   >
                     {event.status.charAt(0).toUpperCase() +
@@ -117,7 +120,7 @@ function Events() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
-                    className="text-blue-600 hover:text-blue-900 mr-4"
+                    className="text-purple-600 hover:text-purple-900 mr-4"
                     onClick={() => {
                       /* TODO: Implement edit */
                     }}
@@ -125,7 +128,7 @@ function Events() {
                     Edit
                   </button>
                   <button
-                    className="text-red-600 hover:text-red-900"
+                    className="text-pink-600 hover:text-pink-900"
                     onClick={() => {
                       /* TODO: Implement delete */
                     }}

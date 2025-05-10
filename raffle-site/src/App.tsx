@@ -64,6 +64,7 @@ function App() {
             <Route path="events" element={<div>Events Management</div>} />
             <Route path="items" element={<div>Items Management</div>} />
             <Route path="orders" element={<div>Orders Management</div>} />
+            <Route path="users" element={<div>Users Management</div>} />
           </Route>
         </Routes>
       </div>

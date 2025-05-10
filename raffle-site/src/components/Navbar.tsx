@@ -16,10 +16,7 @@ function Navbar({ cartItems }: NavbarProps) {
   const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsLoggedIn(!!session?.user);
-    });
+    checkAdminStatus();
 
     // Listen for changes on auth state (sign in, sign out, etc.)
     const {
@@ -33,7 +30,6 @@ function Navbar({ cartItems }: NavbarProps) {
 
   const handleLoginClick = () => {
     setShowLogin(true);
-    setIsAdmin(true);
   };
 
   const onLogout = async () => {
@@ -41,6 +37,26 @@ function Navbar({ cartItems }: NavbarProps) {
     if (error) {
       console.error("Error logging out:", error.message);
     }
+  };
+
+  const checkAdminStatus = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      return;
+    }
+
+    // Check if user has admin role
+    const { data: profile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("role")
+      .eq("id", session.user.id)
+      .single();
+
+    if (profileError) throw profileError;
+
+    setIsAdmin(profile?.role === "admin");
   };
 
   return (

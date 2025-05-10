@@ -35,25 +35,10 @@ CREATE POLICY "Users can update their own profile"
     FOR UPDATE
     USING (auth.uid() = id);
 
-CREATE POLICY "Admins can view all profiles"
+CREATE POLICY "Users can insert their own profile"
     ON public.user_profiles
-    FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.user_profiles
-            WHERE id = auth.uid() AND role = 'admin'
-        )
-    );
-
-CREATE POLICY "Admins can update all profiles"
-    ON public.user_profiles
-    FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.user_profiles
-            WHERE id = auth.uid() AND role = 'admin'
-        )
-    );
+    FOR INSERT
+    WITH CHECK (auth.uid() = id);
 
 -- Create function to handle new user signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()

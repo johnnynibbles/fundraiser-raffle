@@ -2,9 +2,10 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Store from "./pages/Store";
 import Cart from "./pages/Cart";
 import Join from "./pages/Join";
-import Admin from "./pages/Admin";
 import Navbar from "./components/Navbar"; // Import the Navbar component
 import { useState } from "react";
+import AdminLayout from "./components/AdminLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
 
 function App() {
   const [cartItems, setCartItems] = useState<
@@ -56,7 +57,14 @@ function App() {
             }
           />
           <Route path="/join" element={<Join />} />
-          <Route path="/admin" element={<Admin />} />
+
+          {/* Admin routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="events" element={<div>Events Management</div>} />
+            <Route path="items" element={<div>Items Management</div>} />
+            <Route path="orders" element={<div>Orders Management</div>} />
+          </Route>
         </Routes>
       </div>
     </Router>

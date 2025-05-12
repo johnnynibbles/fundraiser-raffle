@@ -4,7 +4,7 @@ import Cart from "./pages/Cart";
 import Join from "./pages/Join";
 import Navbar from "./components/Navbar"; // Import the Navbar component
 import { useState } from "react";
-import AdminLayout from "./components/AdminLayout";
+import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import Events from "./pages/admin/Events";
 

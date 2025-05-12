@@ -23,6 +23,7 @@ function Navbar({ cartItems }: NavbarProps) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session?.user);
+      checkAdminStatus();
     });
 
     return () => subscription.unsubscribe();
@@ -64,13 +65,19 @@ function Navbar({ cartItems }: NavbarProps) {
       <nav className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 fixed top-0 left-0 w-full shadow-md z-10">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold">
-            <Link to="/" className="text-white hover:text-pink-100">
+            <Link
+              to="/"
+              className="text-white hover:text-pink-100 cursor-pointer"
+            >
               Fundraising Raffle Site
             </Link>
           </h1>
           <ul className="flex items-center space-x-4">
             <li>
-              <Link to="/" className="text-white hover:text-pink-100">
+              <Link
+                to="/"
+                className="text-white hover:text-pink-100 cursor-pointer"
+              >
                 Store
               </Link>
             </li>
@@ -80,14 +87,17 @@ function Navbar({ cartItems }: NavbarProps) {
             {!isLoggedIn ? (
               <>
                 <li>
-                  <Link to="/join" className="text-white hover:text-pink-100">
+                  <Link
+                    to="/join"
+                    className="text-white hover:text-pink-100 cursor-pointer"
+                  >
                     Join
                   </Link>
                 </li>
                 <li>
                   <button
                     onClick={handleLoginClick}
-                    className="text-white hover:text-pink-100"
+                    className="text-white hover:text-pink-100 cursor-pointer"
                   >
                     Login
                   </button>
@@ -99,7 +109,7 @@ function Navbar({ cartItems }: NavbarProps) {
                   <li>
                     <Link
                       to="/admin"
-                      className="text-white hover:text-pink-100"
+                      className="text-white hover:text-pink-100 cursor-pointer"
                     >
                       Admin
                     </Link>
@@ -108,7 +118,7 @@ function Navbar({ cartItems }: NavbarProps) {
                 <li>
                   <button
                     onClick={onLogout}
-                    className="text-white hover:text-pink-100"
+                    className="text-white hover:text-pink-100 cursor-pointer"
                   >
                     Logout
                   </button>

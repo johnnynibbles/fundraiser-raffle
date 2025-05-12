@@ -62,3 +62,22 @@ CREATE TRIGGER on_auth_user_created
 
 -- Create index for role-based queries
 CREATE INDEX idx_user_profiles_role ON public.user_profiles(role); 
+
+
+CREATE POLICY "Enable insert for authenticated users only" ON public.raffle_events
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (
+        EXISTS(
+            SELECT 1 FROM user_profiles WHERE auth.uid() = id AND role = 'admin'
+            )
+        );
+
+CREATE POLICY "Enable update for authenticated users only" ON public.raffle_events
+    FOR UPDATE
+    TO authenticated
+    WITH CHECK (
+        EXISTS(
+            SELECT 1 FROM user_profiles WHERE auth.uid() = id AND role = 'admin'
+            )
+        );

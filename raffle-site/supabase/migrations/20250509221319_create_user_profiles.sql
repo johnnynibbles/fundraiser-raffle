@@ -81,3 +81,38 @@ CREATE POLICY "Enable update for authenticated users only" ON public.raffle_even
             SELECT 1 FROM user_profiles WHERE auth.uid() = id AND role = 'admin'
             )
         );
+
+CREATE POLICY "Enable delete for authenticated users only" ON public.raffle_events
+    FOR DELETE
+    TO authenticated
+    USING (
+        EXISTS(
+            SELECT 1 FROM user_profiles WHERE auth.uid() = id AND role = 'admin'
+            )
+        );
+CREATE POLICY "Enable insert for authenticated users only" ON public.raffle_items
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (
+        EXISTS(
+            SELECT 1 FROM user_profiles WHERE auth.uid() = id AND role = 'admin'
+            )
+        );
+
+CREATE POLICY "Enable update for authenticated users only" ON public.raffle_items
+    FOR UPDATE
+    TO authenticated
+    WITH CHECK (
+        EXISTS(
+            SELECT 1 FROM user_profiles WHERE auth.uid() = id AND role = 'admin'
+            )
+        );
+
+CREATE POLICY "Enable delete for authenticated users only" ON public.raffle_items
+    FOR DELETE
+    TO authenticated
+    USING (
+        EXISTS(
+            SELECT 1 FROM user_profiles WHERE auth.uid() = id AND role = 'admin'
+            )
+        );

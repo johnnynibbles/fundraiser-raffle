@@ -7,6 +7,7 @@ import { useState } from "react";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import Events from "./pages/admin/Events";
+import AdminRaffleItems from "./pages/admin/RaffleItems";
 
 function App() {
   const [cartItems, setCartItems] = useState<
@@ -63,7 +64,7 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="events" element={<Events />} />
-            <Route path="items" element={<div>Items Management</div>} />
+            <Route path="items" element={<AdminRaffleItems />} />
             <Route path="orders" element={<div>Orders Management</div>} />
             <Route path="users" element={<div>Users Management</div>} />
           </Route>

@@ -14,12 +14,47 @@ CREATE TABLE IF NOT EXISTS public.raffle_events (
 CREATE TABLE IF NOT EXISTS public.raffle_items (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     event_id UUID REFERENCES public.raffle_events(id) ON DELETE CASCADE,
+    item_number TEXT NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
     price DECIMAL(10,2) NOT NULL,
     image_url TEXT,
+    category TEXT NOT NULL,
+    sponsor TEXT,
+    item_value DECIMAL(10,2),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create storage bucket for raffle item images
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('raffle-items', 'raffle-items', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Set up storage policies for raffle items bucket
+CREATE POLICY "Allow public read access"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'raffle-items');
+
+CREATE POLICY "Allow authenticated users to upload images"
+ON storage.objects FOR INSERT
+WITH CHECK (
+    bucket_id = 'raffle-items'
+    AND auth.role() = 'authenticated'
+);
+
+CREATE POLICY "Allow authenticated users to update their images"
+ON storage.objects FOR UPDATE
+USING (
+    bucket_id = 'raffle-items'
+    AND auth.role() = 'authenticated'
+);
+
+CREATE POLICY "Allow authenticated users to delete their images"
+ON storage.objects FOR DELETE
+USING (
+    bucket_id = 'raffle-items'
+    AND auth.role() = 'authenticated'
 );
 
 -- Create raffle_tickets table

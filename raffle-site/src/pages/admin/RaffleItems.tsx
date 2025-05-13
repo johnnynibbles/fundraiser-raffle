@@ -14,6 +14,9 @@ interface RaffleItem {
   created_at: string;
 }
 
+type SortField = "item_number" | "name" | "price" | "category" | "created_at";
+type SortDirection = "asc" | "desc";
+
 function AdminRaffleItems() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +25,9 @@ function AdminRaffleItems() {
   const [isEditing, setIsEditing] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<RaffleItem>>({});
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<SortField>("created_at");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   useEffect(() => {
     checkAdminStatus();
@@ -92,7 +98,7 @@ function AdminRaffleItems() {
       const filePath = `${fileName}`;
 
       // Upload image to Supabase Storage
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("raffle-items")
         .upload(filePath, file);
 
@@ -175,10 +181,52 @@ function AdminRaffleItems() {
     }
   };
 
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const filteredAndSortedItems = items
+    .filter((item) => {
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        item.name.toLowerCase().includes(searchLower) ||
+        item.description.toLowerCase().includes(searchLower) ||
+        item.item_number.toLowerCase().includes(searchLower) ||
+        item.category.toLowerCase().includes(searchLower) ||
+        (item.sponsor?.toLowerCase().includes(searchLower) ?? false)
+      );
+    })
+    .sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortDirection === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+      }
+
+      return 0;
+    });
+
+  const getSortIcon = (field: SortField) => {
+    if (field !== sortField) return "↕️";
+    return sortDirection === "asc" ? "↑" : "↓";
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     );
   }
@@ -198,13 +246,15 @@ function AdminRaffleItems() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Manage Raffle Items</h1>
+        <h1 className="text-2xl font-bold text-purple-600">
+          Manage Raffle Items
+        </h1>
         <button
           onClick={() => {
             setCurrentItem({});
             setIsEditing(true);
           }}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-md hover:from-pink-600 hover:to-purple-600 transition-colors cursor-pointer"
         >
           Add New Item
         </button>
@@ -213,7 +263,7 @@ function AdminRaffleItems() {
       {isEditing ? (
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6"
+          className="bg-white p-6 rounded-lg shadow-sm border border-pink-100 mb-6"
         >
           <h2 className="text-xl font-semibold mb-4">
             {currentItem.id ? "Edit Item" : "Add New Item"}
@@ -387,65 +437,147 @@ function AdminRaffleItems() {
             </div>
           </div>
         </form>
-      ) : null}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
-          >
-            <img
-              src={item.image_url}
-              alt={item.name}
-              className="w-full h-48 object-cover rounded-lg mb-4"
-            />
-            <h3 className="text-lg font-semibold mb-2">
-              <span className="text-sm text-gray-500 mr-2">
-                #{item.item_number}
-              </span>
-              {item.name}
-            </h3>
-            <p className="text-gray-600 mb-2">{item.description}</p>
-            <div className="flex flex-col space-y-2 mb-4">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">
-                  Ticket Price: ${item.price.toFixed(2)}
-                </span>
-                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  {item.category}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                {item.item_value && (
-                  <span className="text-sm text-gray-600">
-                    Value: ${item.item_value.toFixed(2)}
-                  </span>
-                )}
-                {item.sponsor && (
-                  <span className="text-sm text-gray-600">
-                    Sponsored by: {item.sponsor}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => handleEdit(item)}
-                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(item.id)}
-                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-              >
-                Delete
-              </button>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-pink-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
             </div>
           </div>
-        ))}
-      </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-pink-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-pink-100">
+                <thead className="bg-gradient-to-r from-pink-50 to-purple-50">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort("item_number")}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>Item #</span>
+                        <span>{getSortIcon("item_number")}</span>
+                      </div>
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort("name")}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>Name</span>
+                        <span>{getSortIcon("name")}</span>
+                      </div>
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort("category")}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>Category</span>
+                        <span>{getSortIcon("category")}</span>
+                      </div>
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort("price")}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>Price</span>
+                        <span>{getSortIcon("price")}</span>
+                      </div>
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider"
+                    >
+                      Image
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider"
+                    >
+                      Sponsor
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-purple-600 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-pink-100">
+                  {filteredAndSortedItems.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {item.item_number}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-purple-600">
+                          {item.name}
+                        </div>
+                        <div className="text-sm text-gray-500 line-clamp-2">
+                          {item.description}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.category}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-purple-600 font-medium">
+                        ${item.price.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="h-10 w-10 object-cover rounded-lg"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs">
+                            No Image
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.sponsor || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="text-purple-600 hover:text-purple-700 cursor-pointer mr-3"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="text-red-500 hover:text-red-600 cursor-pointer"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

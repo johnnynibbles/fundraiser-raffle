@@ -1,3 +1,78 @@
+
+-- Create updated_at trigger function
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create user_profiles
+CREATE TABLE IF NOT EXISTS public.user_profiles (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    email TEXT UNIQUE,
+    full_name TEXT,
+    phone_number TEXT,
+    address TEXT,
+    city TEXT,
+    state TEXT,
+    postal_code TEXT,
+    country TEXT DEFAULT 'USA',
+    role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+    avatar_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create updated_at trigger for user_profiles
+CREATE TRIGGER set_updated_at_user_profiles
+    BEFORE UPDATE ON public.user_profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
+-- Enable RLS
+ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Users can view their own profile"
+    ON public.user_profiles
+    FOR SELECT
+    USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile"
+    ON public.user_profiles
+    FOR UPDATE
+    USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert their own profile"
+    ON public.user_profiles
+    FOR INSERT
+    WITH CHECK (auth.uid() = id);
+
+-- Create function to handle new user signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.user_profiles (id, email, full_name)
+    VALUES (
+        NEW.id,
+        NEW.email,
+        COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email)
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create trigger for new user signup
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_new_user();
+
+-- Create index for role-based queries
+CREATE INDEX idx_user_profiles_role ON public.user_profiles(role);
+
 -- Create raffle_events table
 CREATE TABLE IF NOT EXISTS public.raffle_events (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -22,6 +97,10 @@ CREATE TABLE IF NOT EXISTS public.raffle_items (
     category TEXT NOT NULL,
     sponsor TEXT,
     item_value DECIMAL(10,2),
+    is_over_21 BOOLEAN NOT NULL DEFAULT false,
+    is_local_pickup_only BOOLEAN NOT NULL DEFAULT false,
+    is_available BOOLEAN NOT NULL DEFAULT true,
+    draw_count INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -57,23 +136,6 @@ USING (
     AND auth.role() = 'authenticated'
 );
 
--- Create raffle_tickets table
-CREATE TABLE IF NOT EXISTS public.raffle_tickets (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    item_id UUID REFERENCES public.raffle_items(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    quantity INTEGER NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create updated_at trigger function
-CREATE OR REPLACE FUNCTION public.handle_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
 -- Add updated_at triggers to tables
 CREATE TRIGGER set_updated_at_raffle_events
@@ -89,7 +151,6 @@ CREATE TRIGGER set_updated_at_raffle_items
 -- Add RLS policies
 ALTER TABLE public.raffle_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.raffle_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.raffle_tickets ENABLE ROW LEVEL SECURITY;
 
 -- Create policies
 CREATE POLICY "Enable read access for all users" ON public.raffle_events
@@ -98,13 +159,51 @@ CREATE POLICY "Enable read access for all users" ON public.raffle_events
 CREATE POLICY "Enable read access for all users" ON public.raffle_items
     FOR SELECT USING (true);
 
-CREATE POLICY "Enable read access for all users" ON public.raffle_tickets
-    FOR SELECT USING (true);
+-- Add admin policies for raffle_events
+CREATE POLICY "Enable insert for authenticated users only" ON public.raffle_events
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid() AND role = 'admin'
+        )
+    );
+CREATE POLICY "Enable update for authenticated users only" ON public.raffle_events
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid() AND role = 'admin'
+        )
+    );
+CREATE POLICY "Enable delete for authenticated users only" ON public.raffle_events
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid() AND role = 'admin'
+        )
+    );
 
-CREATE POLICY "Enable insert for authenticated users only" ON public.raffle_tickets
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Add admin policies for raffle_items
+CREATE POLICY "Enable insert for admin users only" ON public.raffle_items
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid() AND role = 'admin'
+        )
+    );
+CREATE POLICY "Enable update for admin users only" ON public.raffle_items
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid() AND role = 'admin'
+        )
+    );
+CREATE POLICY "Enable delete for admin users only" ON public.raffle_items
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid() AND role = 'admin'
+        )
+    );
 
 -- Create indexes
 CREATE INDEX idx_raffle_items_event_id ON public.raffle_items(event_id);
-CREATE INDEX idx_raffle_tickets_item_id ON public.raffle_tickets(item_id);
-CREATE INDEX idx_raffle_tickets_user_id ON public.raffle_tickets(user_id); 

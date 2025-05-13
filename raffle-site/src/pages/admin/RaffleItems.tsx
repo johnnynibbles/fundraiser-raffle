@@ -11,6 +11,10 @@ interface RaffleItem {
   category: string;
   sponsor: string | null;
   item_value: number | null;
+  is_over_21: boolean;
+  is_local_pickup_only: boolean;
+  is_available: boolean;
+  draw_count: number;
   created_at: string;
 }
 
@@ -162,21 +166,71 @@ function AdminRaffleItems() {
     e.preventDefault();
     try {
       if (currentItem.id) {
-        const { error } = await supabase
+        // For updates, we need to ensure all required fields are present
+        const updateData = {
+          item_number: currentItem.item_number,
+          name: currentItem.name,
+          description: currentItem.description,
+          price: currentItem.price,
+          image_url: currentItem.image_url,
+          category: currentItem.category,
+          sponsor: currentItem.sponsor || null,
+          item_value: currentItem.item_value || null,
+          is_over_21: currentItem.is_over_21 || false,
+          is_local_pickup_only: currentItem.is_local_pickup_only || false,
+          is_available: currentItem.is_available !== false,
+          draw_count: currentItem.draw_count || 0,
+        };
+
+        console.log("Updating item with ID:", currentItem.id);
+        console.log("Update data:", updateData);
+
+        const { data, error } = await supabase
           .from("raffle_items")
-          .update(currentItem)
-          .eq("id", currentItem.id);
-        if (error) throw error;
+          .update(updateData)
+          .eq("id", currentItem.id)
+          .select();
+
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
+
+        console.log("Update response:", data);
       } else {
-        const { error } = await supabase
+        // For new items, ensure all required fields are present
+        const insertData = {
+          item_number: currentItem.item_number,
+          name: currentItem.name,
+          description: currentItem.description,
+          price: currentItem.price,
+          image_url: currentItem.image_url,
+          category: currentItem.category,
+          sponsor: currentItem.sponsor || null,
+          item_value: currentItem.item_value || null,
+          is_over_21: currentItem.is_over_21 || false,
+          is_local_pickup_only: currentItem.is_local_pickup_only || false,
+          is_available: currentItem.is_available !== false,
+          draw_count: currentItem.draw_count || 0,
+        };
+
+        const { data, error } = await supabase
           .from("raffle_items")
-          .insert([currentItem]);
-        if (error) throw error;
+          .insert([insertData])
+          .select();
+
+        if (error) {
+          console.error("Insert error:", error);
+          throw error;
+        }
+
+        console.log("Insert response:", data);
       }
       setIsEditing(false);
       setCurrentItem({});
       await fetchItems();
     } catch (err) {
+      console.error("Save error:", err);
       setError(err instanceof Error ? err.message : "Failed to save item");
     }
   };
@@ -385,6 +439,86 @@ function AdminRaffleItems() {
                 min="0"
                 step="0.01"
                 placeholder="Estimated value of the item"
+              />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="is_over_21"
+                  checked={currentItem.is_over_21 || false}
+                  onChange={(e) =>
+                    setCurrentItem({
+                      ...currentItem,
+                      is_over_21: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label
+                  htmlFor="is_over_21"
+                  className="ml-2 block text-sm text-gray-700"
+                >
+                  21+ Only
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="is_local_pickup_only"
+                  checked={currentItem.is_local_pickup_only || false}
+                  onChange={(e) =>
+                    setCurrentItem({
+                      ...currentItem,
+                      is_local_pickup_only: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label
+                  htmlFor="is_local_pickup_only"
+                  className="ml-2 block text-sm text-gray-700"
+                >
+                  Local Pickup Only
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="is_available"
+                  checked={currentItem.is_available !== false}
+                  onChange={(e) =>
+                    setCurrentItem({
+                      ...currentItem,
+                      is_available: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label
+                  htmlFor="is_available"
+                  className="ml-2 block text-sm text-gray-700"
+                >
+                  Available
+                </label>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Number of Draws
+              </label>
+              <input
+                type="number"
+                value={currentItem.draw_count || 0}
+                onChange={(e) =>
+                  setCurrentItem({
+                    ...currentItem,
+                    draw_count: parseInt(e.target.value) || 0,
+                  })
+                }
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                min="0"
+                required
               />
             </div>
             <div>

@@ -33,8 +33,8 @@ function AdminRaffleItems() {
   const [currentItem, setCurrentItem] = useState<Partial<RaffleItem>>({});
   const [uploadingImage, setUploadingImage] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField>("created_at");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<SortField>("item_number");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   useEffect(() => {
     checkAdminStatus();
@@ -111,8 +111,8 @@ function AdminRaffleItems() {
       }
 
       // Check file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error("Image size should be less than 5MB");
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error("Image size should be less than 10MB");
       }
 
       const fileExt = file.name.split(".").pop();

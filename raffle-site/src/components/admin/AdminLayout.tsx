@@ -1,6 +1,5 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import AdminNav from "../../components/admin/AdminNav";
-import { EventProvider } from "../../lib/context/EventContext";
 
 function AdminLayout() {
   const navigate = useNavigate();
@@ -12,14 +11,12 @@ function AdminLayout() {
   };
 
   return (
-    <EventProvider>
-      <div className="flex">
-        <AdminNav onNavigate={handleNavigate} currentSection={currentSection} />
-        <div className="flex-1 ml-64">
-          <Outlet />
-        </div>
+    <div className="flex">
+      <AdminNav onNavigate={handleNavigate} currentSection={currentSection} />
+      <div className="flex-1 ml-64">
+        <Outlet />
       </div>
-    </EventProvider>
+    </div>
   );
 }
 

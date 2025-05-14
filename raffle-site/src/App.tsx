@@ -8,6 +8,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import Events from "./pages/admin/Events";
 import AdminRaffleItems from "./pages/admin/RaffleItems";
+import { EventProvider } from "./lib/context/EventContext";
 
 function App() {
   const [cartItems, setCartItems] = useState<
@@ -44,32 +45,34 @@ function App() {
 
   return (
     <Router>
-      <Navbar cartItems={cartItems} />
-      <div className="container mx-auto mt-20">
-        <Routes>
-          <Route path="/" element={<Store addToCart={addToCart} />} />
-          <Route
-            path="/cart"
-            element={
-              <Cart
-                cartItems={cartItems}
-                updateCartItemQuantity={updateCartItemQuantity}
-                removeFromCart={removeFromCart}
-              />
-            }
-          />
-          <Route path="/join" element={<Join />} />
+      <EventProvider>
+        <Navbar cartItems={cartItems} />
+        <div className="container mx-auto mt-20">
+          <Routes>
+            <Route path="/" element={<Store addToCart={addToCart} />} />
+            <Route
+              path="/cart"
+              element={
+                <Cart
+                  cartItems={cartItems}
+                  updateCartItemQuantity={updateCartItemQuantity}
+                  removeFromCart={removeFromCart}
+                />
+              }
+            />
+            <Route path="/join" element={<Join />} />
 
-          {/* Admin routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="events" element={<Events />} />
-            <Route path="items" element={<AdminRaffleItems />} />
-            <Route path="orders" element={<div>Orders Management</div>} />
-            <Route path="users" element={<div>Users Management</div>} />
-          </Route>
-        </Routes>
-      </div>
+            {/* Admin routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="events" element={<Events />} />
+              <Route path="items" element={<AdminRaffleItems />} />
+              <Route path="orders" element={<div>Orders Management</div>} />
+              <Route path="users" element={<div>Users Management</div>} />
+            </Route>
+          </Routes>
+        </div>
+      </EventProvider>
     </Router>
   );
 }

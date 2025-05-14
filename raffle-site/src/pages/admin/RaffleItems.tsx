@@ -179,7 +179,7 @@ function AdminRaffleItems() {
           is_over_21: currentItem.is_over_21 || false,
           is_local_pickup_only: currentItem.is_local_pickup_only || false,
           is_available: currentItem.is_available !== false,
-          draw_count: currentItem.draw_count || 0,
+          draw_count: currentItem.draw_count || 1,
         };
 
         console.log("Updating item with ID:", currentItem.id);
@@ -211,7 +211,7 @@ function AdminRaffleItems() {
           is_over_21: currentItem.is_over_21 || false,
           is_local_pickup_only: currentItem.is_local_pickup_only || false,
           is_available: currentItem.is_available !== false,
-          draw_count: currentItem.draw_count || 0,
+          draw_count: currentItem.draw_count || 1,
         };
 
         const { data, error } = await supabase
@@ -509,15 +509,15 @@ function AdminRaffleItems() {
               </label>
               <input
                 type="number"
-                value={currentItem.draw_count || 0}
+                value={currentItem.draw_count || 1}
                 onChange={(e) =>
                   setCurrentItem({
                     ...currentItem,
-                    draw_count: parseInt(e.target.value) || 0,
+                    draw_count: parseInt(e.target.value) || 1,
                   })
                 }
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                min="0"
+                min="1"
                 required
               />
             </div>

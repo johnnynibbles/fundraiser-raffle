@@ -28,7 +28,7 @@ function Events() {
       const { data, error } = await supabase
         .from("raffle_events")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("start_date", { ascending: false });
 
       if (error) throw error;
       setEvents(data || []);

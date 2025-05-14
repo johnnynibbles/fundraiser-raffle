@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { useEvent } from "../../lib/context/EventContext";
 
 interface RaffleItem {
   id: string;
+  event_id: string;
   item_number: string;
   name: string;
   description: string;
@@ -22,6 +24,7 @@ type SortField = "item_number" | "name" | "price" | "category" | "created_at";
 type SortDirection = "asc" | "desc";
 
 function AdminRaffleItems() {
+  const { selectedEventId } = useEvent();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -35,8 +38,19 @@ function AdminRaffleItems() {
 
   useEffect(() => {
     checkAdminStatus();
-    fetchItems();
   }, []);
+
+  useEffect(() => {
+    if (selectedEventId) {
+      fetchItems(selectedEventId);
+    }
+  }, [selectedEventId]);
+
+  useEffect(() => {
+    if (selectedEventId && !currentItem.event_id) {
+      setCurrentItem((prev) => ({ ...prev, event_id: selectedEventId }));
+    }
+  }, [selectedEventId]);
 
   const checkAdminStatus = async () => {
     try {
@@ -65,16 +79,20 @@ function AdminRaffleItems() {
     }
   };
 
-  const fetchItems = async () => {
+  const fetchItems = async (selectedEventId: string) => {
     try {
+      console.log("Fetching items for event:", selectedEventId);
       const { data, error } = await supabase
         .from("raffle_items")
         .select("*")
-        .order("created_at", { ascending: false });
+        .eq("event_id", selectedEventId)
+        .order("item_number", { ascending: true });
 
       if (error) throw error;
+      console.log("Fetched items:", data);
       setItems(data || []);
     } catch (err) {
+      console.error("Error fetching items:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch items");
     }
   };
@@ -156,7 +174,7 @@ function AdminRaffleItems() {
         .eq("id", id);
 
       if (error) throw error;
-      await fetchItems();
+      await fetchItems(selectedEventId || "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete item");
     }
@@ -166,8 +184,8 @@ function AdminRaffleItems() {
     e.preventDefault();
     try {
       if (currentItem.id) {
-        // For updates, we need to ensure all required fields are present
         const updateData = {
+          event_id: currentItem.event_id,
           item_number: currentItem.item_number,
           name: currentItem.name,
           description: currentItem.description,
@@ -182,24 +200,16 @@ function AdminRaffleItems() {
           draw_count: currentItem.draw_count || 1,
         };
 
-        console.log("Updating item with ID:", currentItem.id);
-        console.log("Update data:", updateData);
-
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("raffle_items")
           .update(updateData)
           .eq("id", currentItem.id)
           .select();
 
-        if (error) {
-          console.error("Update error:", error);
-          throw error;
-        }
-
-        console.log("Update response:", data);
+        if (error) throw error;
       } else {
-        // For new items, ensure all required fields are present
         const insertData = {
+          event_id: currentItem.event_id,
           item_number: currentItem.item_number,
           name: currentItem.name,
           description: currentItem.description,
@@ -214,23 +224,17 @@ function AdminRaffleItems() {
           draw_count: currentItem.draw_count || 1,
         };
 
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("raffle_items")
           .insert([insertData])
           .select();
 
-        if (error) {
-          console.error("Insert error:", error);
-          throw error;
-        }
-
-        console.log("Insert response:", data);
+        if (error) throw error;
       }
       setIsEditing(false);
       setCurrentItem({});
-      await fetchItems();
+      await fetchItems(selectedEventId || "");
     } catch (err) {
-      console.error("Save error:", err);
       setError(err instanceof Error ? err.message : "Failed to save item");
     }
   };
@@ -305,7 +309,7 @@ function AdminRaffleItems() {
         </h1>
         <button
           onClick={() => {
-            setCurrentItem({});
+            setCurrentItem({ event_id: selectedEventId });
             setIsEditing(true);
           }}
           className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-md hover:from-pink-600 hover:to-purple-600 transition-colors cursor-pointer"

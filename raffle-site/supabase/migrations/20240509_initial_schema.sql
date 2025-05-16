@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS public.raffle_items (
     description TEXT,
     price DECIMAL(10,2) NOT NULL,
     image_url TEXT,
+    image_urls TEXT[] DEFAULT ARRAY[]::TEXT[],
     category TEXT NOT NULL,
     sponsor TEXT,
     item_value DECIMAL(10,2),

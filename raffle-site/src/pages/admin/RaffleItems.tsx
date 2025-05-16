@@ -9,7 +9,7 @@ interface RaffleItem {
   name: string;
   description: string;
   price: number;
-  image_url: string;
+  image_urls: string[];
   category: string;
   sponsor: string | null;
   item_value: number | null;
@@ -30,7 +30,9 @@ function AdminRaffleItems() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [items, setItems] = useState<RaffleItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentItem, setCurrentItem] = useState<Partial<RaffleItem>>({});
+  const [currentItem, setCurrentItem] = useState<Partial<RaffleItem>>({
+    image_urls: [],
+  });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("item_number");
@@ -90,7 +92,12 @@ function AdminRaffleItems() {
 
       if (error) throw error;
       console.log("Fetched items:", data);
-      setItems(data || []);
+      setItems(
+        (data || []).map((item) => ({
+          ...item,
+          image_urls: item.image_urls || [],
+        }))
+      );
     } catch (err) {
       console.error("Error fetching items:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch items");
@@ -102,39 +109,34 @@ function AdminRaffleItems() {
   ) => {
     try {
       setUploadingImage(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      // Check file type
-      if (!file.type.startsWith("image/")) {
-        throw new Error("Please upload an image file");
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith("image/")) {
+          throw new Error("Please upload an image file");
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error("Image size should be less than 10MB");
+        }
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Math.random()
+          .toString(36)
+          .substring(2)}.${fileExt}`;
+        const filePath = `${fileName}`;
+        const { error: uploadError } = await supabase.storage
+          .from("raffle-items")
+          .upload(filePath, file);
+        if (uploadError) throw uploadError;
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("raffle-items").getPublicUrl(filePath);
+        uploadedUrls.push(publicUrl);
       }
-
-      // Check file size (5MB limit)
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error("Image size should be less than 10MB");
-      }
-
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      // Upload image to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from("raffle-items")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("raffle-items").getPublicUrl(filePath);
-
-      // Update current item with new image URL
       setCurrentItem((prev) => ({
         ...prev,
-        image_url: publicUrl,
+        image_urls: [...(prev.image_urls || []), ...uploadedUrls],
       }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload image");
@@ -152,18 +154,20 @@ function AdminRaffleItems() {
     if (!confirm("Are you sure you want to delete this item?")) return;
 
     try {
-      // First, get the item to find its image URL
+      // First, get the item to find its image URLs
       const { data: item } = await supabase
         .from("raffle_items")
-        .select("image_url")
+        .select("image_urls")
         .eq("id", id)
         .single();
 
-      // Delete the image from storage if it exists
-      if (item?.image_url) {
-        const imagePath = item.image_url.split("/").pop();
-        if (imagePath) {
-          await supabase.storage.from("raffle-items").remove([imagePath]);
+      // Delete the images from storage if they exist
+      if (item?.image_urls) {
+        for (const url of item.image_urls) {
+          const imagePath = url.split("/").pop();
+          if (imagePath) {
+            await supabase.storage.from("raffle-items").remove([imagePath]);
+          }
         }
       }
 
@@ -180,6 +184,13 @@ function AdminRaffleItems() {
     }
   };
 
+  const handleDeleteImage = (url: string) => {
+    setCurrentItem((prev) => ({
+      ...prev,
+      image_urls: (prev.image_urls || []).filter((img) => img !== url),
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -190,7 +201,7 @@ function AdminRaffleItems() {
           name: currentItem.name,
           description: currentItem.description,
           price: currentItem.price,
-          image_url: currentItem.image_url,
+          image_urls: currentItem.image_urls || [],
           category: currentItem.category,
           sponsor: currentItem.sponsor || null,
           item_value: currentItem.item_value || null,
@@ -214,7 +225,7 @@ function AdminRaffleItems() {
           name: currentItem.name,
           description: currentItem.description,
           price: currentItem.price,
-          image_url: currentItem.image_url,
+          image_urls: currentItem.image_urls || [],
           category: currentItem.category,
           sponsor: currentItem.sponsor || null,
           item_value: currentItem.item_value || null,
@@ -527,19 +538,35 @@ function AdminRaffleItems() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Image
+                Images
               </label>
               <div className="mt-1 flex items-center space-x-4">
-                {currentItem.image_url && (
-                  <img
-                    src={currentItem.image_url}
-                    alt="Preview"
-                    className="h-20 w-20 object-cover rounded-lg"
-                  />
-                )}
+                {currentItem.image_urls &&
+                  currentItem.image_urls.length > 0 && (
+                    <div className="flex flex-wrap gap-4">
+                      {currentItem.image_urls.map((url) => (
+                        <div key={url} className="relative group">
+                          <img
+                            src={url}
+                            alt="Preview"
+                            className="h-20 w-20 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteImage(url)}
+                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 opacity-80 group-hover:opacity-100"
+                            title="Remove image"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleImageUpload}
                   className="block w-full text-sm text-gray-500
                     file:mr-4 file:py-2 file:px-4
@@ -551,7 +578,9 @@ function AdminRaffleItems() {
                 />
               </div>
               {uploadingImage && (
-                <p className="mt-2 text-sm text-gray-500">Uploading image...</p>
+                <p className="mt-2 text-sm text-gray-500">
+                  Uploading images...
+                </p>
               )}
             </div>
             <div className="flex justify-end space-x-4">
@@ -679,9 +708,9 @@ function AdminRaffleItems() {
                         ${item.price.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {item.image_url ? (
+                        {item.image_urls && item.image_urls.length > 0 ? (
                           <img
-                            src={item.image_url}
+                            src={item.image_urls[0]}
                             alt={item.name}
                             className="h-10 w-10 object-cover rounded-lg"
                           />

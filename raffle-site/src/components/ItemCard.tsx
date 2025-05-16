@@ -3,7 +3,7 @@ interface ItemCardProps {
   name: string;
   description: string;
   price: number;
-  image_url: string;
+  image_urls: string[];
   category: string;
   sponsor: string | null;
   item_value: number | null;
@@ -18,7 +18,7 @@ function ItemCard({
   name,
   description,
   price,
-  image_url,
+  image_urls,
   category,
   sponsor,
   item_value,
@@ -29,11 +29,17 @@ function ItemCard({
 }: ItemCardProps) {
   return (
     <div className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-      <img
-        src={image_url}
-        alt={name}
-        className="w-full h-48 object-cover rounded-lg mb-4"
-      />
+      {image_urls && image_urls.length > 0 ? (
+        <img
+          src={image_urls[0]}
+          alt={name}
+          className="w-full h-48 object-cover rounded-lg mb-4"
+        />
+      ) : (
+        <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center text-gray-400 text-xs">
+          No Image
+        </div>
+      )}
       <h2 className="text-lg font-semibold mb-1">{name}</h2>
       <div className="text-xs text-gray-500 mb-2 flex flex-wrap gap-2">
         <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
@@ -75,7 +81,7 @@ function ItemCard({
                 id,
                 name,
                 price,
-                image_url,
+                image_urls,
                 category,
                 sponsor,
                 item_value,

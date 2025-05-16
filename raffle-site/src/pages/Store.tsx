@@ -11,7 +11,7 @@ interface RaffleItem {
   name: string;
   description: string;
   price: number;
-  image_url: string;
+  image_urls: string[];
   category: string;
   sponsor: string | null;
   item_value: number | null;
@@ -70,11 +70,13 @@ function Store({ addToCart }: { addToCart: (item: any) => void }) {
     const rect = button.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top + rect.height / 2;
-
-    setFlyingItem({ x, y, image: item.image_url });
+    setFlyingItem({
+      x,
+      y,
+      image:
+        item.image_urls && item.image_urls.length > 0 ? item.image_urls[0] : "",
+    });
     addToCart(item);
-
-    // Remove the flying item after animation completes
     setTimeout(() => {
       setFlyingItem(null);
     }, 1000);

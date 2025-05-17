@@ -60,6 +60,11 @@ function ItemCard({
     draw_count,
   };
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent opening the modal when clicking the button
+    onAddToCart(item, e);
+  };
+
   return (
     <>
       <div className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
@@ -110,8 +115,14 @@ function ItemCard({
             </span>
           </div>
         </div>
-        <div className="mt-auto">
+        <div className="mt-auto flex justify-between items-center">
           <p className="text-lg font-medium text-blue-600">${price}</p>
+          <button
+            onClick={handleAddToCart}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 cursor-pointer transition-colors"
+          >
+            Add to Cart
+          </button>
         </div>
       </div>
 

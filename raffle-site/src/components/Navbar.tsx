@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEvent } from "../lib/context/EventContext";
 import CartNav from "./CartNav";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
@@ -11,6 +12,7 @@ interface NavbarProps {
 }
 
 function Navbar({ cartItems }: NavbarProps) {
+  const { selectedEvent } = useEvent();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -69,7 +71,7 @@ function Navbar({ cartItems }: NavbarProps) {
               to="/"
               className="text-white hover:text-pink-100 cursor-pointer"
             >
-              Fundraising Raffle Site
+              {selectedEvent ? selectedEvent.name : "Raffle Fundraising"}
             </Link>
           </h1>
           <ul className="flex items-center space-x-4">

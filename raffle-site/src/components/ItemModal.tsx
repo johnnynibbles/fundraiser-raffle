@@ -8,6 +8,7 @@ import { useState } from "react";
 interface RaffleItem {
   id: string;
   name: string;
+  description: string;
   price: number;
   image_urls: string[];
   category: string;
@@ -21,7 +22,7 @@ interface RaffleItem {
 interface ItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: RaffleItem & { description: string };
+  item: RaffleItem;
   onAddToCart: (item: RaffleItem, event: React.MouseEvent) => void;
 }
 

@@ -3,19 +3,19 @@ import Store from "./pages/Store";
 import Cart from "./pages/Cart";
 import Join from "./pages/Join";
 import Navbar from "./components/Navbar"; // Import the Navbar component
+import { CartItem } from "./components/CartItem";
 import { useState } from "react";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import Events from "./pages/admin/Events";
+import Orders from "./pages/admin/Orders";
 import AdminRaffleItems from "./pages/admin/RaffleItems";
 import { EventProvider } from "./lib/context/EventContext";
 
 function App() {
-  const [cartItems, setCartItems] = useState<
-    { id: number; name: string; price: number; quantity: number }[]
-  >([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  const addToCart = (item: { id: number; name: string; price: number }) => {
+  const addToCart = (item: CartItem) => {
     setCartItems((prev) => {
       const existingItem = prev.find((cartItem) => cartItem.id === item.id);
       if (existingItem) {
@@ -67,7 +67,7 @@ function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="events" element={<Events />} />
               <Route path="items" element={<AdminRaffleItems />} />
-              <Route path="orders" element={<div>Orders Management</div>} />
+              <Route path="orders" element={<Orders />} />
               <Route path="users" element={<div>Users Management</div>} />
             </Route>
           </Routes>

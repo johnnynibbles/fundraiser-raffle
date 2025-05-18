@@ -2,25 +2,28 @@ import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 interface QuantityControlProps {
   quantity: number;
-  onUpdate: (delta: number) => void;
+  onIncrement: () => void;
+  onDecrement: () => void;
 }
 
-function QuantityControl({ quantity, onUpdate }: QuantityControlProps) {
+function QuantityControl({
+  quantity,
+  onIncrement,
+  onDecrement,
+}: QuantityControlProps) {
   return (
-    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+    <div className="flex items-center space-x-2">
       <button
-        onClick={() => onUpdate(-1)}
-        className="px-2 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed border-r border-gray-200"
-        disabled={quantity === 0}
+        onClick={onDecrement}
+        disabled={quantity <= 1}
+        className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <MinusIcon className="h-3.5 w-3.5" />
       </button>
-      <span className="w-10 text-center font-medium py-1 bg-white">
-        {quantity}
-      </span>
+      <span className="w-8 text-center">{quantity}</span>
       <button
-        onClick={() => onUpdate(1)}
-        className="px-2 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600 border-l border-gray-200"
+        onClick={onIncrement}
+        className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50"
       >
         <PlusIcon className="h-3.5 w-3.5" />
       </button>

@@ -43,6 +43,7 @@ function AdminNav({ onNavigate, currentSection }: AdminNavProps) {
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: "📊" },
     { id: "events", label: "Events", icon: "🎉" },
+    { id: "event-settings", label: "Event Settings", icon: "⚡" },
     { id: "items", label: "Raffle Items", icon: "🎁" },
     { id: "orders", label: "Orders", icon: "🛍️" },
     { id: "users", label: "Users", icon: "👥" },

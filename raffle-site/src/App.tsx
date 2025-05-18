@@ -12,6 +12,7 @@ import Orders from "./pages/admin/Orders";
 import AdminRaffleItems from "./pages/admin/RaffleItems";
 import { EventProvider } from "./lib/context/EventContext";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import EventSettings from "./pages/admin/EventSettings";
 
 function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -62,12 +63,16 @@ function App() {
               }
             />
             <Route path="/join" element={<Join />} />
-            <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
+            <Route
+              path="/order-confirmation/:orderNumber"
+              element={<OrderConfirmation />}
+            />
 
             {/* Admin routes */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="events" element={<Events />} />
+              <Route path="event-settings" element={<EventSettings />} />
               <Route path="items" element={<AdminRaffleItems />} />
               <Route path="orders" element={<Orders />} />
               <Route path="users" element={<div>Users Management</div>} />

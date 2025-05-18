@@ -396,3 +396,53 @@ DELETE
                 AND role = 'admin'
         )
     );
+
+-- Create event_settings table
+CREATE TABLE IF NOT EXISTS public.event_settings (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    event_id UUID REFERENCES public.raffle_events(id) ON DELETE CASCADE,
+    allow_international_orders BOOLEAN NOT NULL DEFAULT false,
+    require_age_confirmation BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Add updated_at trigger
+CREATE TRIGGER set_updated_at_event_settings
+    BEFORE UPDATE ON public.event_settings
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
+-- Enable RLS
+ALTER TABLE public.event_settings ENABLE ROW LEVEL SECURITY;
+
+-- Add RLS policies
+CREATE POLICY "Enable read access for all users" ON public.event_settings
+    FOR SELECT USING (true);
+
+CREATE POLICY "Enable insert for admin users only" ON public.event_settings
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid() AND role = 'admin'
+        )
+    );
+
+CREATE POLICY "Enable update for admin users only" ON public.event_settings
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid() AND role = 'admin'
+        )
+    );
+
+CREATE POLICY "Enable delete for admin users only" ON public.event_settings
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id = auth.uid() AND role = 'admin'
+        )
+    );
+
+-- Create index for event_id
+CREATE INDEX idx_event_settings_event_id ON public.event_settings(event_id);

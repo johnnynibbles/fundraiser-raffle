@@ -4,6 +4,7 @@ import { useEvent } from "../../lib/context/EventContext";
 
 interface Order {
   id: string;
+  order_number: string;
   created_at: string;
   customer_name: string;
   customer_email: string;
@@ -169,6 +170,12 @@ function Orders() {
                 <tr>
                   <th
                     scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider"
+                  >
+                    Order #
+                  </th>
+                  <th
+                    scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort("created_at")}
                   >
@@ -227,6 +234,9 @@ function Orders() {
                     key={order.id}
                     className="hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 transition-colors"
                   >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-purple-600">
+                      {order.order_number}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {new Date(order.created_at).toLocaleDateString()}
                     </td>

@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
+interface OrderItem {
+  quantity: number;
+  price: number;
+  item: {
+    name: string;
+    item_number: string;
+  };
+}
+
 interface OrderDetails {
   order_number: string;
   customer_name: string;
@@ -10,6 +19,7 @@ interface OrderDetails {
   total_tickets: number;
   created_at: string;
   status: string;
+  order_items: OrderItem[];
 }
 
 export default function OrderConfirmation() {
@@ -23,7 +33,19 @@ export default function OrderConfirmation() {
       try {
         const { data, error } = await supabase
           .from("orders")
-          .select("*")
+          .select(
+            `
+            *,
+            order_items (
+              quantity,
+              price,
+              item:raffle_items (
+                name,
+                item_number
+              )
+            )
+          `
+          )
           .eq("order_number", orderNumber)
           .single();
 
@@ -142,6 +164,35 @@ export default function OrderConfirmation() {
                 <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                   {order.status}
                 </span>
+              </dd>
+            </div>
+            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-purple-700">
+                Items Purchased
+              </dt>
+              <dd className="mt-1 text-sm text-purple-900 sm:mt-0 sm:col-span-2">
+                <ul className="divide-y divide-gray-200">
+                  {order.order_items.map((item, index) => (
+                    <li key={index} className="py-2">
+                      <div className="flex justify-between">
+                        <div>
+                          <span className="font-medium">{item.item.name}</span>
+                          <span className="text-gray-500 ml-2">
+                            (Item #{item.item.item_number})
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-gray-600">
+                            {item.quantity} × ${item.price.toFixed(2)}
+                          </span>
+                          <span className="ml-4 font-medium">
+                            ${(item.quantity * item.price).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </dd>
             </div>
           </dl>

@@ -1,13 +1,5 @@
 import { useState } from "react";
 
-interface CheckoutFormProps {
-  totalTickets: number;
-  totalPrice: number;
-  onSubmit: (formData: CheckoutFormData) => void;
-  onCancel: () => void;
-  hasAgeRestrictedItems: boolean;
-}
-
 export interface CheckoutFormData {
   firstName: string;
   lastName: string;
@@ -23,11 +15,17 @@ export interface CheckoutFormData {
   ageConfirmed: boolean;
 }
 
-function CheckoutForm({
-  totalTickets,
-  totalPrice,
+interface CheckoutFormProps {
+  onSubmit: (data: CheckoutFormData) => void;
+  onCancel: () => void;
+  isSubmitting: boolean;
+  hasAgeRestrictedItems: boolean;
+}
+
+export default function CheckoutForm({
   onSubmit,
   onCancel,
+  isSubmitting,
   hasAgeRestrictedItems,
 }: CheckoutFormProps) {
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -46,334 +44,283 @@ function CheckoutForm({
   });
 
   const [emailError, setEmailError] = useState<string>("");
-  const [formErrors, setFormErrors] = useState<{
-    ageConfirmed?: string;
-  }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate email match
     if (formData.email !== formData.confirmEmail) {
       setEmailError("Email addresses do not match");
       return;
     }
-
-    // Validate age confirmation if needed
-    if (hasAgeRestrictedItems && !formData.ageConfirmed) {
-      setFormErrors({ ageConfirmed: "You must confirm you are 21 or older" });
-      return;
-    }
-
     setEmailError("");
-    setFormErrors({});
     onSubmit(formData);
   };
 
-  const handleEmailChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    isConfirm: boolean
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const newEmail = e.target.value;
-    if (isConfirm) {
-      setFormData({ ...formData, confirmEmail: newEmail });
-      setEmailError(
-        newEmail !== formData.email ? "Email addresses do not match" : ""
-      );
-    } else {
-      setFormData({ ...formData, email: newEmail });
-      setEmailError(
-        newEmail !== formData.confirmEmail ? "Email addresses do not match" : ""
-      );
-    }
-  };
+    const { name, value, type } = e.target;
+    const newValue =
+      type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
 
-  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const isInternational = e.target.value !== "US";
-    setFormData({
-      ...formData,
-      country: e.target.value,
-      isInternational,
-      // Clear state if international
-      state: isInternational ? "" : formData.state,
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [name]: newValue,
+      };
+
+      // Check email match when either email field changes
+      if (name === "email" || name === "confirmEmail") {
+        const email = name === "email" ? newValue : prev.email;
+        const confirmEmail =
+          name === "confirmEmail" ? newValue : prev.confirmEmail;
+        setEmailError(
+          email !== confirmEmail ? "Email addresses do not match" : ""
+        );
+      }
+
+      return newData;
     });
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Checkout</h2>
-          <button
-            onClick={onCancel}
-            className="text-gray-500 hover:text-gray-700"
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor="firstName"
+            className="block text-sm font-medium text-purple-700"
           >
-            ✕
-          </button>
+            First Name
+          </label>
+          <input
+            type="text"
+            name="firstName"
+            id="firstName"
+            required
+            value={formData.firstName}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+          />
         </div>
 
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex justify-between items-center text-lg font-semibold">
-            <span>Total Tickets: {totalTickets}</span>
-            <span>Total Price: ${totalPrice.toFixed(2)}</span>
-          </div>
+        <div>
+          <label
+            htmlFor="lastName"
+            className="block text-sm font-medium text-purple-700"
+          >
+            Last Name
+          </label>
+          <input
+            type="text"
+            name="lastName"
+            id="lastName"
+            required
+            value={formData.lastName}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="firstName"
-                className="block text-sm font-medium text-gray-700"
-              >
-                First Name
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                required
-                value={formData.firstName}
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="lastName"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                required
-                value={formData.lastName}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-purple-700"
+          >
+            Email
+          </label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+            className={`mt-1 block w-full rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 ${
+              emailError ? "border-red-300" : "border-purple-300"
+            }`}
+          />
+        </div>
 
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                required
-                value={formData.email}
-                onChange={(e) => handleEmailChange(e, false)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="confirmEmail"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Confirm Email Address
-              </label>
-              <input
-                type="email"
-                id="confirmEmail"
-                required
-                value={formData.confirmEmail}
-                onChange={(e) => handleEmailChange(e, true)}
-                className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                  emailError ? "border-red-300" : "border-gray-300"
-                }`}
-              />
-              {emailError && (
-                <p className="mt-1 text-sm text-red-600">{emailError}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="phone"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Phone
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              required
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="country"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Country
-            </label>
-            <select
-              id="country"
-              required
-              value={formData.country}
-              onChange={handleCountryChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="US">United States</option>
-              <option value="CA">Canada</option>
-              <option value="MX">Mexico</option>
-              <option value="OTHER">Other</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="address"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Street Address
-            </label>
-            <input
-              type="text"
-              id="address"
-              required
-              value={formData.address}
-              onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label
-                htmlFor="city"
-                className="block text-sm font-medium text-gray-700"
-              >
-                City
-              </label>
-              <input
-                type="text"
-                id="city"
-                required
-                value={formData.city}
-                onChange={(e) =>
-                  setFormData({ ...formData, city: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            {!formData.isInternational && (
-              <div>
-                <label
-                  htmlFor="state"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  State
-                </label>
-                <input
-                  type="text"
-                  id="state"
-                  required
-                  value={formData.state}
-                  onChange={(e) =>
-                    setFormData({ ...formData, state: e.target.value })
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-            )}
-            <div>
-              <label
-                htmlFor="zipCode"
-                className="block text-sm font-medium text-gray-700"
-              >
-                {formData.isInternational ? "Postal Code" : "ZIP Code"}
-              </label>
-              <input
-                type="text"
-                id="zipCode"
-                required
-                value={formData.zipCode}
-                onChange={(e) =>
-                  setFormData({ ...formData, zipCode: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          {hasAgeRestrictedItems && (
-            <div className="mt-4">
-              <div className="flex items-start">
-                <div className="flex items-center h-5">
-                  <input
-                    id="ageConfirmed"
-                    type="checkbox"
-                    checked={formData.ageConfirmed}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        ageConfirmed: e.target.checked,
-                      })
-                    }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                </div>
-                <div className="ml-3 text-sm">
-                  <label
-                    htmlFor="ageConfirmed"
-                    className="font-medium text-gray-700"
-                  >
-                    I confirm that I am 21 years of age or older
-                  </label>
-                  {formErrors.ageConfirmed && (
-                    <p className="mt-1 text-red-600">
-                      {formErrors.ageConfirmed}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+        <div>
+          <label
+            htmlFor="confirmEmail"
+            className="block text-sm font-medium text-purple-700"
+          >
+            Confirm Email
+          </label>
+          <input
+            type="email"
+            name="confirmEmail"
+            id="confirmEmail"
+            required
+            value={formData.confirmEmail}
+            onChange={handleChange}
+            className={`mt-1 block w-full rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 ${
+              emailError ? "border-red-300" : "border-purple-300"
+            }`}
+          />
+          {emailError && (
+            <p className="mt-1 text-sm text-red-600">{emailError}</p>
           )}
+        </div>
 
-          <div className="flex justify-end space-x-4 mt-6">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={
-                !!emailError ||
-                (hasAgeRestrictedItems && !formData.ageConfirmed)
-              }
-              className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Complete Purchase
-            </button>
-          </div>
-        </form>
+        <div>
+          <label
+            htmlFor="phone"
+            className="block text-sm font-medium text-purple-700"
+          >
+            Phone
+          </label>
+          <input
+            type="tel"
+            name="phone"
+            id="phone"
+            required
+            value={formData.phone}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label
+            htmlFor="address"
+            className="block text-sm font-medium text-purple-700"
+          >
+            Address
+          </label>
+          <input
+            type="text"
+            name="address"
+            id="address"
+            required
+            value={formData.address}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="city"
+            className="block text-sm font-medium text-purple-700"
+          >
+            City
+          </label>
+          <input
+            type="text"
+            name="city"
+            id="city"
+            required
+            value={formData.city}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="state"
+            className="block text-sm font-medium text-purple-700"
+          >
+            State
+          </label>
+          <input
+            type="text"
+            name="state"
+            id="state"
+            required
+            value={formData.state}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="zipCode"
+            className="block text-sm font-medium text-purple-700"
+          >
+            ZIP Code
+          </label>
+          <input
+            type="text"
+            name="zipCode"
+            id="zipCode"
+            required
+            value={formData.zipCode}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="country"
+            className="block text-sm font-medium text-purple-700"
+          >
+            Country
+          </label>
+          <select
+            name="country"
+            id="country"
+            required
+            value={formData.country}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+          >
+            <option value="US">United States</option>
+            <option value="CA">Canada</option>
+            <option value="MX">Mexico</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
       </div>
-    </div>
+
+      {hasAgeRestrictedItems && (
+        <div className="flex items-start">
+          <div className="flex items-center h-5">
+            <input
+              type="checkbox"
+              name="ageConfirmed"
+              id="ageConfirmed"
+              required
+              checked={formData.ageConfirmed}
+              onChange={handleChange}
+              className="h-4 w-4 rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+            />
+          </div>
+          <div className="ml-3 text-sm">
+            <label
+              htmlFor="ageConfirmed"
+              className="font-medium text-purple-700"
+            >
+              Age Confirmation
+            </label>
+            <p className="text-purple-500">
+              I confirm that I am at least 21 years old and will provide valid
+              ID upon pickup.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-end space-x-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-md shadow-sm hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting || !!emailError}
+          className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? "Processing..." : "Complete Order"}
+        </button>
+      </div>
+    </form>
   );
 }
-
-export default CheckoutForm;

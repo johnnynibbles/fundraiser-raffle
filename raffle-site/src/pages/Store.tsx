@@ -3,31 +3,22 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import ItemCard from "../components/ItemCard";
 import { supabase } from "../lib/supabase";
 import { useEvent } from "../lib/context/EventContext";
+import { MouseEvent } from "react";
+import { RaffleItem } from "../types/store";
 
-interface RaffleItem {
-  id: string;
-  event_id: string;
-  item_number: string;
-  name: string;
-  description: string;
-  price: number;
-  image_urls: string[];
-  category: string;
-  sponsor: string | null;
-  item_value: number | null;
-  is_over_21: boolean;
-  is_local_pickup_only: boolean;
-  is_available: boolean;
-  draw_count: number;
-  created_at: string;
+interface EventSettings {
+  header_image_url: string | null;
 }
 
-function Store({ addToCart }: { addToCart: (item: any) => void }) {
+function Store({ addToCart }: { addToCart: (item: RaffleItem) => void }) {
   const { selectedEventId } = useEvent();
   const [items, setItems] = useState<RaffleItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [eventSettings, setEventSettings] = useState<EventSettings | null>(
+    null
+  );
   const [flyingItem, setFlyingItem] = useState<{
     x: number;
     y: number;
@@ -37,13 +28,32 @@ function Store({ addToCart }: { addToCart: (item: any) => void }) {
   useEffect(() => {
     if (selectedEventId) {
       fetchItems(selectedEventId);
+      fetchEventSettings(selectedEventId);
     } else {
-      // Optionally, clear items or show a message if no event is selected
       setItems([]);
       setIsLoading(false);
       setError("Please select an event to see raffle items.");
     }
   }, [selectedEventId]);
+
+  const fetchEventSettings = async (eventId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("event_settings")
+        .select("header_image_url")
+        .eq("event_id", eventId)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        // PGRST116 is "no rows returned"
+        throw error;
+      }
+
+      setEventSettings(data);
+    } catch (err) {
+      console.error("Error fetching event settings:", err);
+    }
+  };
 
   const fetchItems = async (eventId: string) => {
     setIsLoading(true);
@@ -53,7 +63,7 @@ function Store({ addToCart }: { addToCart: (item: any) => void }) {
         .from("raffle_items")
         .select("*")
         .eq("event_id", eventId)
-        .eq("is_available", true) // Only show available items
+        .eq("is_available", true)
         .order("item_number", { ascending: true });
 
       if (error) throw error;
@@ -65,7 +75,7 @@ function Store({ addToCart }: { addToCart: (item: any) => void }) {
     }
   };
 
-  const handleAddToCart = (item: any, event: React.MouseEvent) => {
+  const handleAddToCart = (item: RaffleItem, event: MouseEvent<Element>) => {
     const button = event.currentTarget;
     const rect = button.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
@@ -123,7 +133,18 @@ function Store({ addToCart }: { addToCart: (item: any) => void }) {
           }
         `}
       </style>
-      <h1 className="text-2xl font-bold mb-4">Store</h1>
+
+      {/* Header Image */}
+      {eventSettings?.header_image_url && (
+        <div className="mb-8 relative w-auto h-48 flex justify-center">
+          <img
+            src={eventSettings.header_image_url}
+            alt="Event header"
+            className="h-full object-contain rounded-lg shadow-md"
+          />
+        </div>
+      )}
+
       <div className="mb-6 relative">
         <div className="relative">
           <input

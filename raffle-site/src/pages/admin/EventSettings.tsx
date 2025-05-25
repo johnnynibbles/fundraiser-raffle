@@ -7,6 +7,7 @@ interface EventSettings {
   event_id: string;
   allow_international_orders: boolean;
   require_age_confirmation: boolean;
+  header_image_url: string | null;
 }
 
 function EventSettings() {
@@ -19,7 +20,9 @@ function EventSettings() {
     event_id: selectedEventId || "",
     allow_international_orders: false,
     require_age_confirmation: false,
+    header_image_url: null,
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     checkAdminStatus();
@@ -58,24 +61,139 @@ function EventSettings() {
     }
   };
 
+  const getPreviousEventSettings = async () => {
+    try {
+      // Get the previous event's settings
+      const { data: previousEvent, error: eventError } = await supabase
+        .from("raffle_events")
+        .select("id")
+        .lt("start_date", new Date().toISOString())
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (eventError) throw eventError;
+
+      if (previousEvent) {
+        const { data: previousSettings, error: settingsError } = await supabase
+          .from("event_settings")
+          .select("*")
+          .eq("event_id", previousEvent.id)
+          .single();
+
+        if (settingsError && settingsError.code !== "PGRST116")
+          throw settingsError;
+
+        if (previousSettings) {
+          // Remove id field and set new event_id
+          const { ...settingsWithoutId } = previousSettings;
+          return {
+            ...settingsWithoutId,
+            event_id: selectedEventId || "",
+          };
+        }
+      }
+
+      // If no previous settings found, return default settings
+      return {
+        event_id: selectedEventId || "",
+        allow_international_orders: false,
+        require_age_confirmation: false,
+        header_image_url: null,
+      };
+    } catch (err) {
+      console.error("Error fetching previous settings:", err);
+      // Return default settings if there's an error
+      return {
+        event_id: selectedEventId || "",
+        allow_international_orders: false,
+        require_age_confirmation: false,
+        header_image_url: null,
+      };
+    }
+  };
+
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
+      // First, check if settings already exist for this event
+      const { data: existingSettings, error: fetchError } = await supabase
         .from("event_settings")
         .select("*")
         .eq("event_id", selectedEventId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") {
-        // PGRST116 is "no rows returned"
-        throw error;
-      }
+      if (fetchError) throw fetchError;
 
-      if (data) {
-        setSettings(data);
+      if (existingSettings) {
+        // If settings exist, use them
+        setSettings(existingSettings);
+      } else {
+        // Only create new settings if none exist
+        const defaultSettings = await getPreviousEventSettings();
+        setSettings(defaultSettings);
+
+        // Create new settings with defaults using upsert
+        const { error: upsertError } = await supabase
+          .from("event_settings")
+          .upsert([defaultSettings], {
+            onConflict: "event_id",
+            ignoreDuplicates: true,
+          });
+
+        if (upsertError) throw upsertError;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch settings");
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedEventId) return;
+
+    try {
+      setUploadingImage(true);
+      setError(null);
+
+      // Upload image to Supabase Storage
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${selectedEventId}/header-image.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("event-headers")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("event-headers").getPublicUrl(fileName);
+
+      // Update settings with new image URL
+      setSettings((prev) => ({
+        ...prev,
+        header_image_url: publicUrl,
+      }));
+
+      // Save settings to database
+      if (settings.id) {
+        const { error: updateError } = await supabase
+          .from("event_settings")
+          .update({ header_image_url: publicUrl })
+          .eq("id", settings.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("event_settings")
+          .insert([{ ...settings, header_image_url: publicUrl }]);
+
+        if (insertError) throw insertError;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -85,22 +203,15 @@ function EventSettings() {
     setIsLoading(true);
 
     try {
-      if (settings.id) {
-        // Update existing settings
-        const { error } = await supabase
-          .from("event_settings")
-          .update(settings)
-          .eq("id", settings.id);
+      // Use upsert to handle both insert and update cases
+      const { error } = await supabase
+        .from("event_settings")
+        .upsert([settings], {
+          onConflict: "event_id",
+          ignoreDuplicates: true,
+        });
 
-        if (error) throw error;
-      } else {
-        // Create new settings
-        const { error } = await supabase
-          .from("event_settings")
-          .insert([settings]);
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       // Refresh settings
       await fetchSettings();
@@ -148,6 +259,42 @@ function EventSettings() {
         )}
 
         <div className="space-y-6">
+          {/* Header Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Header Image
+            </label>
+            <div className="mt-1 flex items-center space-x-4">
+              {settings.header_image_url && (
+                <div className="relative w-48 h-16">
+                  <img
+                    src={settings.header_image_url}
+                    alt="Header preview"
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
+              )}
+              <div className="flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                  className="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-md file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-purple-50 file:text-purple-700
+                    hover:file:bg-purple-100
+                    cursor-pointer"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  Recommended size: 1200x400 pixels
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center">
             <input
               type="checkbox"

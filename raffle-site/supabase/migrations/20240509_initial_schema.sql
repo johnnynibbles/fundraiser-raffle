@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW ()
 );
 
+ALTER TABLE public.user_profiles
+ADD CONSTRAINT user_profiles_id_key UNIQUE (id);
+
 -- Create updated_at trigger for user_profiles
 CREATE TRIGGER set_updated_at_user_profiles BEFORE
 UPDATE
@@ -403,9 +406,40 @@ CREATE TABLE IF NOT EXISTS public.event_settings (
     event_id UUID REFERENCES public.raffle_events(id) ON DELETE CASCADE,
     allow_international_orders BOOLEAN NOT NULL DEFAULT false,
     require_age_confirmation BOOLEAN NOT NULL DEFAULT false,
+    header_image_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+-- Add unique constraint to event_settings table
+ALTER TABLE public.event_settings
+ADD CONSTRAINT event_settings_event_id_key UNIQUE (event_id);
+
+-- Create storage bucket for event header images
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('event-headers', 'event-headers', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Set up storage policies for event headers bucket
+CREATE POLICY "Allow public read access event-headers" ON storage.objects
+    FOR SELECT USING (bucket_id = 'event-headers');
+
+CREATE POLICY "Allow authenticated users to upload images event-headers" ON storage.objects
+    FOR INSERT WITH CHECK (
+        bucket_id = 'event-headers'
+        AND auth.role() = 'authenticated'
+    );
+
+CREATE POLICY "Allow authenticated users to update their images event-headers" ON storage.objects
+    FOR UPDATE USING (
+        bucket_id = 'event-headers'
+        AND auth.role() = 'authenticated'
+    );
+
+CREATE POLICY "Allow authenticated users to delete their images event-headers" ON storage.objects
+    FOR DELETE USING (
+        bucket_id = 'event-headers'
+        AND auth.role() = 'authenticated'
+    );
 
 -- Add updated_at trigger
 CREATE TRIGGER set_updated_at_event_settings

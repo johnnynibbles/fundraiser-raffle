@@ -3,7 +3,6 @@ import Store from "./pages/Store";
 import Cart from "./pages/Cart";
 import Join from "./pages/Join";
 import Navbar from "./components/Navbar"; // Import the Navbar component
-import { CartItem } from "./components/CartItem";
 import { useState } from "react";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -13,23 +12,38 @@ import AdminRaffleItems from "./pages/admin/RaffleItems";
 import { EventProvider } from "./lib/context/EventContext";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import EventSettings from "./pages/admin/EventSettings";
+import { CartItem, RaffleItem } from "./types/store";
 
 function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  const addToCart = (item: CartItem) => {
+  const addToCart = (item: RaffleItem) => {
     setCartItems((prev) => {
-      const existingItem = prev.find((cartItem) => cartItem.id === item.id);
+      const existingItem = prev.find(
+        (cartItem) => cartItem.id === parseInt(item.id)
+      );
       if (existingItem) {
         // Increment the quantity if the item already exists in the cart
         return prev.map((cartItem) =>
-          cartItem.id === item.id
+          cartItem.id === parseInt(item.id)
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem
         );
       }
       // Add the item to the cart with a quantity of 1 if it doesn't exist
-      return [...prev, { ...item, quantity: 1 }];
+      const cartItem: CartItem = {
+        id: parseInt(item.id),
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        quantity: 1,
+        image_urls: item.image_urls,
+        item_value: item.item_value,
+        is_over_21: item.is_over_21,
+        is_local_pickup_only: item.is_local_pickup_only,
+        item_number: item.id, // Using id as item_number since it's not in RaffleItem
+      };
+      return [...prev, cartItem];
     });
   };
 

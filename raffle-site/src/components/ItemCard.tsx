@@ -4,6 +4,7 @@ import { RaffleItem } from "../types/store";
 
 interface ItemCardProps {
   id: string;
+  item_number: string;
   name: string;
   description: string;
   price: number;
@@ -19,6 +20,7 @@ interface ItemCardProps {
 
 function ItemCard({
   id,
+  item_number,
   name,
   description,
   price,
@@ -35,6 +37,7 @@ function ItemCard({
 
   const item: RaffleItem = {
     id,
+    item_number,
     name,
     description,
     price,
@@ -97,9 +100,11 @@ function ItemCard({
                 Local Pickup
               </span>
             )}
-            <span className="bg-pink-50 text-pink-600 px-2 py-0.5 rounded">
-              Draws: {draw_count}
-            </span>
+            {draw_count > 1 && (
+              <span className="bg-pink-50 text-pink-600 px-2 py-0.5 rounded">
+                {draw_count} Draws
+              </span>
+            )}
           </div>
         </div>
         <div className="mt-auto flex justify-between items-center">

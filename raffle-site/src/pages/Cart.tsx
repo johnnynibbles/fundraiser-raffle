@@ -6,8 +6,8 @@ import CheckoutForm, { CheckoutFormData } from "../components/CheckoutForm";
 
 interface CartProps {
   cartItems: CartItem[];
-  updateCartItemQuantity: (id: number, delta: number) => void;
-  removeFromCart: (id: number) => void;
+  updateCartItemQuantity: (id: string, delta: number) => void;
+  removeFromCart: (id: string) => void;
 }
 
 export default function Cart({
@@ -255,7 +255,8 @@ export default function Cart({
                     <p>${totalPrice.toFixed(2)}</p>
                   </div>
                   <p className="mt-1 text-sm text-purple-600">
-                    The total is the recommended donation amount for the tickets.
+                    The total is the recommended donation amount for the
+                    tickets.
                   </p>
                   <div className="mt-6">
                     {!showCheckoutForm ? (

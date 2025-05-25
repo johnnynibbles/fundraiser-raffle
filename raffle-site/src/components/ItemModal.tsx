@@ -7,6 +7,7 @@ import { useState } from "react";
 
 interface RaffleItem {
   id: string;
+  item_number: string;
   name: string;
   description: string;
   price: number;

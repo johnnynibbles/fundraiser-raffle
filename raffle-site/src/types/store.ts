@@ -1,5 +1,6 @@
 export interface RaffleItem {
   id: string;
+  item_number: string;
   name: string;
   description: string;
   price: number;
@@ -13,7 +14,7 @@ export interface RaffleItem {
 }
 
 export interface CartItem {
-  id: number;
+  id: string;
   name: string;
   description: string;
   price: number;

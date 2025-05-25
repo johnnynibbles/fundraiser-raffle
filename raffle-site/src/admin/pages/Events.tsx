@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import EventForm from "../../components/admin/EventForm";
+import EventForm from "../components/EventForm";
 
 interface RaffleEvent {
   id: number;

@@ -4,15 +4,10 @@ import Cart from "./pages/Cart";
 import Join from "./pages/Join";
 import Navbar from "./components/Navbar"; // Import the Navbar component
 import { useState } from "react";
-import AdminLayout from "./components/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/Dashboard";
-import Events from "./pages/admin/Events";
-import Orders from "./pages/admin/Orders";
-import AdminRaffleItems from "./pages/admin/RaffleItems";
 import { EventProvider } from "./lib/context/EventContext";
 import OrderConfirmation from "./pages/OrderConfirmation";
-import EventSettings from "./pages/admin/EventSettings";
 import { CartItem, RaffleItem } from "./types/store";
+import { adminRoutes } from "./admin/routes";
 
 function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -79,16 +74,7 @@ function App() {
               path="/order-confirmation/:orderNumber"
               element={<OrderConfirmation />}
             />
-
-            {/* Admin routes */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="events" element={<Events />} />
-              <Route path="event-settings" element={<EventSettings />} />
-              <Route path="items" element={<AdminRaffleItems />} />
-              <Route path="orders" element={<Orders />} />
-              <Route path="users" element={<div>Users Management</div>} />
-            </Route>
+            {adminRoutes}
           </Routes>
         </div>
       </EventProvider>

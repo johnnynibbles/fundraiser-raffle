@@ -259,6 +259,10 @@ export default function Cart({
                     The total is the recommended donation amount for the
                     tickets.
                   </p>
+                  <p className="mt-1 text-sm text-purple-600">
+                    After the checkout process is complete, you will then have
+                    an opportunity to complete a donation.
+                  </p>
                   <div className="mt-6">
                     {!showCheckoutForm ? (
                       <button

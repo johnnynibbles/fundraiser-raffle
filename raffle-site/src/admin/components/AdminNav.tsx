@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
 import { useEvent } from "../../lib/context/useEvent";
 
@@ -17,11 +17,7 @@ function AdminNav({ onNavigate, currentSection }: AdminNavProps) {
   const [isLoading, setIsLoading] = useState(true);
   const { selectedEventId, setSelectedEventId } = useEvent();
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("raffle_events")
@@ -38,7 +34,11 @@ function AdminNav({ onNavigate, currentSection }: AdminNavProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedEventId, setSelectedEventId]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: "📊" },

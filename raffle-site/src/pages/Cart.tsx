@@ -155,7 +155,8 @@ export default function Cart({
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => updateCartItemQuantity(item.id, -1)}
-                            className="p-1 rounded-full text-purple-600 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                            disabled={item.quantity <= 1}
+                            className="p-1 rounded-full text-purple-600 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <span className="sr-only">Decrease quantity</span>
                             <svg
@@ -176,7 +177,7 @@ export default function Cart({
                           </span>
                           <button
                             onClick={() => updateCartItemQuantity(item.id, 1)}
-                            className="p-1 rounded-full text-purple-600 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                            className="p-1 rounded-full text-purple-600 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer"
                           >
                             <span className="sr-only">Increase quantity</span>
                             <svg
@@ -203,7 +204,7 @@ export default function Cart({
                         </div>
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          className="ml-4 p-1 rounded-full text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          className="ml-4 p-1 rounded-full text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer"
                         >
                           <span className="sr-only">Remove item</span>
                           <svg

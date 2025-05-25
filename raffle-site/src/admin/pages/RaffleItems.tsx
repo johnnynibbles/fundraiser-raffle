@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { useEvent } from "../../lib/context/EventContext";
+import { useEvent } from "../../lib/context/useEvent";
 
 interface RaffleItem {
   id: string;
@@ -52,7 +52,7 @@ function AdminRaffleItems() {
     if (selectedEventId && !currentItem.event_id) {
       setCurrentItem((prev) => ({ ...prev, event_id: selectedEventId }));
     }
-  }, [selectedEventId]);
+  }, [selectedEventId, currentItem.event_id]);
 
   const checkAdminStatus = async () => {
     try {

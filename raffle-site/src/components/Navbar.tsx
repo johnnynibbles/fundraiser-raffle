@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import { useEvent } from "../lib/context/EventContext";
-import CartNav from "./CartNav";
+import { useEvent } from "../lib/context/useEvent";
+import CartNav from "../store/components/CartNav";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import Login from "./Login";
 import "../App.css";
-import { CartItem } from "./CartItem";
+import { CartItem } from "../store/types/cartItem";
 
 interface NavbarProps {
   cartItems: CartItem[];

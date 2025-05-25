@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
-import { useEvent } from "../../lib/context/EventContext";
+import { useEvent } from "../../lib/context/useEvent";
 
 interface EventSettings {
   id: string;
@@ -24,6 +24,84 @@ function EventSettings() {
   });
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  const getPreviousEventSettings = useCallback(async () => {
+    try {
+      const { data: previousEvent, error: eventError } = await supabase
+        .from("raffle_events")
+        .select("id")
+        .lt("start_date", new Date().toISOString())
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (eventError) throw eventError;
+
+      if (previousEvent) {
+        const { data: previousSettings, error: settingsError } = await supabase
+          .from("event_settings")
+          .select("*")
+          .eq("event_id", previousEvent.id)
+          .single();
+
+        if (settingsError && settingsError.code !== "PGRST116")
+          throw settingsError;
+
+        if (previousSettings) {
+          const { ...settingsWithoutId } = previousSettings;
+          return {
+            ...settingsWithoutId,
+            event_id: selectedEventId || "",
+          };
+        }
+      }
+
+      return {
+        event_id: selectedEventId || "",
+        allow_international_orders: false,
+        require_age_confirmation: false,
+        header_image_url: null,
+      };
+    } catch (err) {
+      console.error("Error fetching previous settings:", err);
+      return {
+        event_id: selectedEventId || "",
+        allow_international_orders: false,
+        require_age_confirmation: false,
+        header_image_url: null,
+      };
+    }
+  }, [selectedEventId]);
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      const { data: existingSettings, error: fetchError } = await supabase
+        .from("event_settings")
+        .select("*")
+        .eq("event_id", selectedEventId)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      if (existingSettings) {
+        setSettings(existingSettings);
+      } else {
+        const defaultSettings = await getPreviousEventSettings();
+        setSettings(defaultSettings);
+
+        const { error: upsertError } = await supabase
+          .from("event_settings")
+          .upsert([defaultSettings], {
+            onConflict: "event_id",
+            ignoreDuplicates: true,
+          });
+
+        if (upsertError) throw upsertError;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch settings");
+    }
+  }, [selectedEventId, getPreviousEventSettings]);
+
   useEffect(() => {
     checkAdminStatus();
   }, []);
@@ -32,7 +110,7 @@ function EventSettings() {
     if (selectedEventId) {
       fetchSettings();
     }
-  }, [selectedEventId]);
+  }, [selectedEventId, fetchSettings]);
 
   const checkAdminStatus = async () => {
     try {
@@ -58,92 +136,6 @@ function EventSettings() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       setIsLoading(false);
-    }
-  };
-
-  const getPreviousEventSettings = async () => {
-    try {
-      // Get the previous event's settings
-      const { data: previousEvent, error: eventError } = await supabase
-        .from("raffle_events")
-        .select("id")
-        .lt("start_date", new Date().toISOString())
-        .order("start_date", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (eventError) throw eventError;
-
-      if (previousEvent) {
-        const { data: previousSettings, error: settingsError } = await supabase
-          .from("event_settings")
-          .select("*")
-          .eq("event_id", previousEvent.id)
-          .single();
-
-        if (settingsError && settingsError.code !== "PGRST116")
-          throw settingsError;
-
-        if (previousSettings) {
-          // Remove id field and set new event_id
-          const { ...settingsWithoutId } = previousSettings;
-          return {
-            ...settingsWithoutId,
-            event_id: selectedEventId || "",
-          };
-        }
-      }
-
-      // If no previous settings found, return default settings
-      return {
-        event_id: selectedEventId || "",
-        allow_international_orders: false,
-        require_age_confirmation: false,
-        header_image_url: null,
-      };
-    } catch (err) {
-      console.error("Error fetching previous settings:", err);
-      // Return default settings if there's an error
-      return {
-        event_id: selectedEventId || "",
-        allow_international_orders: false,
-        require_age_confirmation: false,
-        header_image_url: null,
-      };
-    }
-  };
-
-  const fetchSettings = async () => {
-    try {
-      // First, check if settings already exist for this event
-      const { data: existingSettings, error: fetchError } = await supabase
-        .from("event_settings")
-        .select("*")
-        .eq("event_id", selectedEventId)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      if (existingSettings) {
-        // If settings exist, use them
-        setSettings(existingSettings);
-      } else {
-        // Only create new settings if none exist
-        const defaultSettings = await getPreviousEventSettings();
-        setSettings(defaultSettings);
-
-        // Create new settings with defaults using upsert
-        const { error: upsertError } = await supabase
-          .from("event_settings")
-          .upsert([defaultSettings], {
-            onConflict: "event_id",
-            ignoreDuplicates: true,
-          });
-
-        if (upsertError) throw upsertError;
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch settings");
     }
   };
 

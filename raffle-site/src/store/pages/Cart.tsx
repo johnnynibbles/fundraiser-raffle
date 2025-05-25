@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { CartItem } from "../components/CartItem";
-import { supabase } from "../lib/supabase";
+import { CartItem } from "../types/store";
+import { supabase } from "../../lib/supabase";
 import { useNavigate } from "react-router-dom";
 import CheckoutForm, { CheckoutFormData } from "../components/CheckoutForm";
 

@@ -1,12 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Store from "./pages/Store";
-import Cart from "./pages/Cart";
+import Store from "./store/pages/Store";
+import Cart from "./store/pages/Cart";
 import Join from "./pages/Join";
 import Navbar from "./components/Navbar"; // Import the Navbar component
 import { useState } from "react";
-import { EventProvider } from "./lib/context/EventContext";
-import OrderConfirmation from "./pages/OrderConfirmation";
-import { CartItem, RaffleItem } from "./types/store";
+import { EventProvider } from "./lib/context/EventContext.tsx";
+import OrderConfirmation from "./store/pages/OrderConfirmation";
+import { CartItem, RaffleItem } from "./store/types/store";
 import { adminRoutes } from "./admin/routes";
 
 function App() {

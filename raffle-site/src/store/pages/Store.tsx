@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import ItemCard from "../components/ItemCard";
-import { supabase } from "../lib/supabase";
-import { useEvent } from "../lib/context/EventContext";
+import { supabase } from "../../lib/supabase";
+import { useEvent } from "../../lib/context/useEvent";
 import { MouseEvent } from "react";
 import { RaffleItem } from "../types/store";
 

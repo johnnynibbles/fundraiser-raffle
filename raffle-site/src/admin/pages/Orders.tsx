@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
-import { useEvent } from "../../lib/context/EventContext";
+import { useEvent } from "../../lib/context/useEvent";
 
 interface Order {
   id: string;
@@ -36,13 +36,7 @@ function Orders() {
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
-  useEffect(() => {
-    if (selectedEventId) {
-      fetchOrders();
-    }
-  }, [selectedEventId]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("orders")
@@ -69,7 +63,13 @@ function Orders() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedEventId]);
+
+  useEffect(() => {
+    if (selectedEventId) {
+      fetchOrders();
+    }
+  }, [selectedEventId, fetchOrders]);
 
   const handleStatusChange = async (
     orderId: string,

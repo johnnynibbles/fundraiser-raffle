@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { useEvent } from "../../lib/context/EventContext";
+import { useEvent } from "../../lib/context/useEvent";
 
 interface AdminNavProps {
   onNavigate: (section: string) => void;

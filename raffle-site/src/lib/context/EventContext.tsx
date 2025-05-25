@@ -1,24 +1,11 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-} from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { supabase } from "../supabase";
+import { EventContext } from "./eventContext";
 
 interface Event {
   id: string;
   name: string;
 }
-
-interface EventContextType {
-  selectedEventId: string;
-  selectedEvent: Event | null;
-  setSelectedEventId: (id: string) => void;
-}
-
-const EventContext = createContext<EventContextType | undefined>(undefined);
 
 export function EventProvider({ children }: { children: ReactNode }) {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
@@ -42,7 +29,6 @@ export function EventProvider({ children }: { children: ReactNode }) {
         if (data && data.length > 0) {
           setSelectedEventId(data[0].id);
           setSelectedEvent(data[0]);
-          // Update document title
           document.title = `${data[0].name} - Raffle Fundraising`;
         }
       } catch (err) {
@@ -53,7 +39,6 @@ export function EventProvider({ children }: { children: ReactNode }) {
     fetchCurrentEvent();
   }, []);
 
-  // Update event details when selectedEventId changes
   useEffect(() => {
     const fetchEventDetails = async () => {
       if (!selectedEventId) {
@@ -90,12 +75,4 @@ export function EventProvider({ children }: { children: ReactNode }) {
       {children}
     </EventContext.Provider>
   );
-}
-
-export function useEvent() {
-  const context = useContext(EventContext);
-  if (context === undefined) {
-    throw new Error("useEvent must be used within an EventProvider");
-  }
-  return context;
 }
